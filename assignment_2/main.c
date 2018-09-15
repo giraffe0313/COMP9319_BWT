@@ -17,7 +17,10 @@
 int qsort_compare(const void *a, const void *b);
 void BWT_sort(int *index_array, int size);
 int *find_interupt(int *char_frequency, int size);
+int binary_Search(int array[], int l, int r, int x);
+
 char *text;
+int delimiter_number;
 
 int main(int argc, const char * argv[]) {
     /* analyze input arguments */
@@ -32,25 +35,28 @@ int main(int argc, const char * argv[]) {
     const char *temp_fold_path = argv[2];
     const char *text_file = argv[3];
     const char *bwt_result = argv[4];
-//    printf("%d, %s, %s, %s\n", delimiter, temp_fold_path, text_file, bwt_result);
     
     
     /* open file */
-    int fgetc_result, delimiter_number;
+    int fgetc_result;
     long file_size;
     int char_frequency[128] = {0};
-    
     FILE *file = fopen(text_file, "r");
     fseek(file, 0L, SEEK_END);
-    file_size = ftell(file);
+
+
+    /* need to change !!!!!!*/
+    file_size = ftell(file) - 1;
+    
     fseek(file, 0L, SEEK_SET);
-    printf("file size id %d\n", file_size);
+    printf("file size id %ld\n", file_size);
     text = malloc(file_size * sizeof(char));
 
     i = 0;
-    while ((fgetc_result = fgetc(file)) != EOF) {
+    while ((fgetc_result = fgetc(file)) != EOF && i < file_size) {
         // printf("%d\n", fgetc_result);
         if ((char) fgetc_result == delimiter) {
+            printf("At position %d\n", i);
             text[i] = 0;
             char_frequency[0]++;
         } else {
@@ -60,15 +66,12 @@ int main(int argc, const char * argv[]) {
         i++;
     }
     fclose(file);
-    // for (i = 0; i < file_size; i++) {
-    //     printf("%d\n", text[i]);
-    // }
     printf("text file is %s\n", text);
 
 
 
     /* find half interupt to sperate to two files */
-    int* half_interupt = find_interupt(char_frequency, file_size);
+    int* half_interupt = find_interupt(char_frequency, file_size/2 + 1);
     if (half_interupt[0] < 0) {
         printf("find_interupt bug!!!!!\n");
         exit(-1);
@@ -82,75 +85,120 @@ int main(int argc, const char * argv[]) {
     /* separate to two arrays */
     // first file
     int j = 0;
-    int interupt_number = 0;
-    int index_array_length = (int)file_size/2 + 1;
-    printf("index array 1 length is %d\n", index_array_length);
-    int *index_array1 = malloc(index_array_length * sizeof(int));
+
+    int *delimiter_position = malloc(char_frequency[0] * sizeof(int));
+    int delimiter_index = 0;
+
+    int index_array_length_1 = half_interupt[1];  // the first index array length
+    printf("index array 1 length is %d\n", index_array_length_1);
+    int *index_array = malloc(index_array_length_1 * sizeof(int));
     for (i = 0; i < file_size; i++) {
-        if (text[i] < (char)half_interupt[0]) {
-            index_array1[j] = i;
-            j++;
-//            printf("%d\n", i);
-            if (j == index_array_length) {
-                break;
+        if (text[i] <= (char)half_interupt[0]) {
+            if (text[i] == 0) {
+                delimiter_position[delimiter_index] = i;
+                delimiter_index++;
             }
-        } else if (text[i] == (char)half_interupt[0]) {
-            if (interupt_number < (char)half_interupt[1]) {
-                index_array1[j] = i;
-                j++;
-                interupt_number++;
-//                printf("%d\n", i);
-                if (j == index_array_length) {
-                    break;
+            index_array[j] = i;
+            j++;
+            if (j == index_array_length_1) {
+                if (delimiter_index != char_frequency[0]) {
+                    printf("delimiter bug!!!!\n");
                 }
+                break;
             }
         }
     }
     printf("first sort result:\n");
-    BWT_sort(index_array1, index_array_length);
+    BWT_sort(index_array, index_array_length_1);
     char *file_name_1 = malloc(strlen(temp_fold_path) + 10 + 1);
     strcpy(file_name_1, temp_fold_path);
     strcat(file_name_1, "/temp1.txt");
     
-    file = fopen(file_name_1, "w");
-    fwrite(index_array1, sizeof(int), index_array_length, file);
-    fclose(file);
+    FILE *file_temp1 = fopen(file_name_1, "w");
+    fwrite(index_array, sizeof(int), index_array_length_1, file_temp1);
+    fclose(file_temp1);
     
     // second file
-    index_array_length = file_size - index_array_length;
-    printf("index array 2 length is %d\n", index_array_length);
+    int index_array_length_2 = file_size - index_array_length_1;
+    printf("index array 2 length is %d\n", index_array_length_2);
     j = 0;
-    interupt_number = 0;
     for (i = 0; i < file_size; i++) {
         if (text[i] > (char)half_interupt[0]) {
-            index_array1[j] = i;
+            index_array[j] = i;
             j++;
 //            printf("%d\n", i);
-            if (j == index_array_length) {
+            if (j == index_array_length_2) {
                 break;
             }
-        } else if (text[i] == (char)half_interupt[0]) {
-            if (interupt_number >= (char)half_interupt[1]) {
-                index_array1[j] = i;
-                j++;
-//                printf("%d\n", i);
-                if (j == index_array_length) {
-                    break;
-                }
-            }
-            interupt_number++;
         }
     }
     printf("second sort result:\n");
-    BWT_sort(index_array1, index_array_length);
+    BWT_sort(index_array, index_array_length_2);
     char *file_name_2 = malloc(strlen(temp_fold_path) + 10 + 1);
     strcpy(file_name_2, temp_fold_path);
     strcat(file_name_2, "/temp2.txt");
-    file = fopen(file_name_2, "w");
-    fwrite(index_array1, sizeof(int), index_array_length, file);
-    fclose(file);
+    FILE *file_temp2 = fopen(file_name_2, "w");
+    fwrite(index_array, sizeof(int), index_array_length_2, file_temp2);
+    fclose(file_temp2);
 
+
+    // read from temp file
+    // fseek(file_temp1, 0, SEEK_SET);
+    // fseek(file_temp2, 0, SEEK_SET);
+    FILE *output_file = fopen(bwt_result, "w");
+    file_temp1 = fopen(file_name_1, "r");
+    printf("read temp file1:\n");
+    fread(index_array, sizeof(int), index_array_length_1, file_temp1);
+    printf("read temp file1:\n");
     
+    for (i = 0; i < index_array_length_1; i++) {
+//        printf("%d", index_array[i]);
+        if (index_array[i] == 0) {
+            if (text[file_size-1] == 0) {
+                fwrite(&delimiter, sizeof(char), 1, output_file);
+                printf(" position %ld: %c", file_size-1, delimiter);
+            } else {
+                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                printf("%c", text[index_array[i]-1]);
+            }
+        } else {
+            if (text[index_array[i]-1] == 0) {
+                fwrite(&delimiter, sizeof(char), 1, output_file);
+                printf(" postion %d: %c", index_array[i]-1, delimiter);
+            } else {
+                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                printf("%c", text[index_array[i]-1]);
+            }
+        }
+    }
+    printf("\n");
+
+    file_temp2 = fopen(file_name_2, "r");
+    fread(index_array, sizeof(int), index_array_length_2, file_temp2);
+    printf("read temp file2:\n");
+    for (i = 0; i < index_array_length_2; i++) {
+    //    printf("%d", index_array[i]);
+        if (index_array[i] == 0) {
+            if (text[file_size-1] == 0) {
+                fwrite(&delimiter, sizeof(char), 1, output_file);
+                printf(" position %ld: %c", file_size-1, delimiter);
+                
+            } else {
+                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                printf("%c", text[index_array[i]-1]);
+            }
+        } else {
+            if (text[index_array[i]-1] == 0) {
+                fwrite(&delimiter, sizeof(char), 1, output_file);
+                printf(" position %d: %c", index_array[i]-1, delimiter);
+            } else {
+                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                printf("%c", text[index_array[i]-1]);
+            }
+        }
+    }
+    printf("\n");
+
     return 0;
 
 }
@@ -158,12 +206,14 @@ int main(int argc, const char * argv[]) {
 int* find_interupt(int *char_frequency, int size) {
     int *return_value = malloc(2 * sizeof(int));
     int i;
-    int half = size / 2 + 1;
+    int temp = size;
     for (i = 0; i < 128; i++) {
-        half = half - char_frequency[i];
-        if (half <= 0) {
+        temp = temp - char_frequency[i];
+        // if (char_frequency[i])
+        //     printf("%c frequency is %d, left half is %d\n", i, char_frequency[i], temp);
+        if (temp <= 0) {
             return_value[0] = i;
-            return_value[1] = char_frequency[i] + half;
+            return_value[1] = size - temp;
             return return_value;
         }
     }
@@ -171,6 +221,8 @@ int* find_interupt(int *char_frequency, int size) {
     return_value[1] = 0;
     return return_value;
 }
+
+
 
 
 void BWT_sort(int *index_array, int size) {
@@ -186,7 +238,7 @@ void BWT_sort(int *index_array, int size) {
 //            printf("%c", text[size-1]);
 //        else
 //            printf("%c", text[index_array[i]-1]);
-        printf("%d", index_array[i]);
+        printf("%d ", index_array[i]);
 //        printf("%s\n", text+index_array[i]);
     }
     printf("\n");
@@ -195,5 +247,21 @@ void BWT_sort(int *index_array, int size) {
 int qsort_compare(const void *Ina, const void *Inb) {
     int *a = (int *)Ina;
     int *b = (int *)Inb;
+    if ((char)text[*a] == (char)delimiter_number && ((char)text[*b] == (char)delimiter_number)) {
+        return (*a - *b);
+    }
     return strcmp((char *)text+*a, (char *)text+*b);
+}
+
+int binary_Search(int array[], int l, int r, int x) {
+    while (l <= r) {
+        int m = 1 + (r - l)/2;
+        if (array[m] == x)
+            return m;
+        if (array[m] < x)
+            l = m + 1;
+        else
+            r = m - 1;
+    }
+    return -1;
 }
