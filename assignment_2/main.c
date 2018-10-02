@@ -56,7 +56,7 @@ int main(int argc, const char * argv[]) {
     while ((fgetc_result = fgetc(file)) != EOF && i < file_size) {
         // printf("%d\n", fgetc_result);
         if ((char) fgetc_result == delimiter) {
-            printf("At position %d\n", i);
+            // printf("At position %d\n", i);
             text[i] = 0;
             char_frequency[0]++;
         } else {
@@ -142,32 +142,57 @@ int main(int argc, const char * argv[]) {
     fclose(file_temp2);
 
 
+    // write positional file
+    // printf("delimiter position array:\n");
+    // for (i = 0; i < char_frequency[0]; i++) {
+    //     printf("%d ", delimiter_position[i]);
+    // }
+    // printf("\n");
+
+    char *positional_file_name = malloc(strlen(temp_fold_path) + 13 + 1);
+    strcpy(positional_file_name, temp_fold_path);
+    strcat(positional_file_name, "/position.aux");
+    FILE *positional_file = fopen(positional_file_name, "w");
+    int position_index;
+
     // read from temp file
-    // fseek(file_temp1, 0, SEEK_SET);
-    // fseek(file_temp2, 0, SEEK_SET);
+
     FILE *output_file = fopen(bwt_result, "w");
     file_temp1 = fopen(file_name_1, "r");
     printf("read temp file1:\n");
     fread(index_array, sizeof(int), index_array_length_1, file_temp1);
-    printf("read temp file1:\n");
     
     for (i = 0; i < index_array_length_1; i++) {
 //        printf("%d", index_array[i]);
-        if (index_array[i] == 0) {
-            if (text[file_size-1] == 0) {
-                fwrite(&delimiter, sizeof(char), 1, output_file);
-                printf(" position %ld: %c", file_size-1, delimiter);
-            } else {
+        if (index_array[i] == 0) {              // the first suffix array element.
+            if (text[file_size-1] == 0) {       // if it is delimiter
+                fwrite(&delimiter, sizeof(char), 1, output_file); 
+                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, file_size-1)) == -1) {
+                    printf("binary search error!!\n");
+                    exit(1);
+                } else {
+                    fwrite(&position_index, sizeof(int), 1, positional_file);
+                }
+                // printf(" position %ld: %c", file_size-1, delimiter);
+                
+            } else {                            // ordinary text
                 fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                printf("%c", text[index_array[i]-1]);
+                // printf("%c", text[index_array[i]-1]);
             }
         } else {
             if (text[index_array[i]-1] == 0) {
+                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, index_array[i]-1)) == -1) {
+                    printf("binary search error!!\n");
+                    exit(1);
+                } else {
+                    fwrite(&position_index, sizeof(int), 1, positional_file);
+                }
+
                 fwrite(&delimiter, sizeof(char), 1, output_file);
-                printf(" postion %d: %c", index_array[i]-1, delimiter);
+                // printf(" postion %d: %c", index_array[i]-1, delimiter);
             } else {
                 fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                printf("%c", text[index_array[i]-1]);
+                // printf("%c", text[index_array[i]-1]);
             }
         }
     }
@@ -180,20 +205,34 @@ int main(int argc, const char * argv[]) {
     //    printf("%d", index_array[i]);
         if (index_array[i] == 0) {
             if (text[file_size-1] == 0) {
+                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, file_size-1)) == -1) {
+                    printf("binary search error!!\n");
+                    exit(1);
+                } else {
+                    fwrite(&position_index, sizeof(int), 1, positional_file);
+                }
+
                 fwrite(&delimiter, sizeof(char), 1, output_file);
-                printf(" position %ld: %c", file_size-1, delimiter);
+                // printf(" position %ld: %c", file_size-1, delimiter);
                 
             } else {
                 fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                printf("%c", text[index_array[i]-1]);
+                // printf("%c", text[index_array[i]-1]);
             }
         } else {
             if (text[index_array[i]-1] == 0) {
+                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, index_array[i]-1)) == -1) {
+                    printf("binary search error!!\n");
+                    exit(1);
+                } else {
+                    fwrite(&position_index, sizeof(int), 1, positional_file);
+                }
+
                 fwrite(&delimiter, sizeof(char), 1, output_file);
-                printf(" position %d: %c", index_array[i]-1, delimiter);
+                // printf(" position %d: %c", index_array[i]-1, delimiter);
             } else {
                 fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                printf("%c", text[index_array[i]-1]);
+                // printf("%c", text[index_array[i]-1]);
             }
         }
     }
@@ -202,6 +241,13 @@ int main(int argc, const char * argv[]) {
     return 0;
 
 }
+
+
+
+
+
+
+
 
 int* find_interupt(int *char_frequency, int size) {
     int *return_value = malloc(2 * sizeof(int));
@@ -226,21 +272,20 @@ int* find_interupt(int *char_frequency, int size) {
 
 
 void BWT_sort(int *index_array, int size) {
-    int i = 0;
     
 //    for (i = 0; i < size; i++) {
 //        printf("%d\n", index_array[i]);
 //    }
 
     qsort(index_array, size, sizeof(int), qsort_compare);
-    for (i = 0; i < size; i++) {
+    // for (i = 0; i < size; i++) {
 //        if (index_array[i] == 0)
 //            printf("%c", text[size-1]);
 //        else
 //            printf("%c", text[index_array[i]-1]);
-        printf("%d ", index_array[i]);
+        // printf("%d ", index_array[i]);
 //        printf("%s\n", text+index_array[i]);
-    }
+    // }
     printf("\n");
 }
 
@@ -254,14 +299,19 @@ int qsort_compare(const void *Ina, const void *Inb) {
 }
 
 int binary_Search(int array[], int l, int r, int x) {
-    while (l <= r) {
-        int m = 1 + (r - l)/2;
-        if (array[m] == x)
-            return m;
-        if (array[m] < x)
-            l = m + 1;
+    // printf("search position is %d\n", x);
+   while (l <= r) 
+    { 
+        int m = l + (r-l)/2; 
+        // Check if x is present at mid 
+        if (array[m] == x) 
+            return m + 1; 
+        // If x greater, ignore left half 
+        if (array[m] < x) 
+            l = m + 1; 
+        // If x is smaller, ignore right half 
         else
-            r = m - 1;
-    }
+            r = m - 1; 
+    } 
     return -1;
 }
