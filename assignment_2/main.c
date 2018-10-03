@@ -41,7 +41,7 @@ int main(int argc, const char * argv[]) {
         delimiter = '\n';
     else
         delimiter = (char)argv[1][0];
-    printf("delimiter is %d %c\n", delimiter, delimiter);
+    // printf("delimiter is %d %c\n", delimiter, delimiter);
     const char *temp_fold_path = argv[2];
     const char *text_file = argv[3];
     const char *bwt_result = argv[4];
@@ -56,10 +56,10 @@ int main(int argc, const char * argv[]) {
 
 
     /* need to change !!!!!!*/
-    file_size = ftell(file) - 1;
+    file_size = ftell(file);
     
     fseek(file, 0L, SEEK_SET);
-    printf("Malloc: file size is %ld, type:char\n", file_size);
+    // printf("Malloc: file size is %ld, type:char\n", file_size);
     text = malloc(file_size * sizeof(char));
 
     i = 0;
@@ -76,7 +76,7 @@ int main(int argc, const char * argv[]) {
         i++;
     }
     fclose(file);
-    printf("text file is %s\n", text);
+    // printf("text file is %s\n", text);
 
 
 
@@ -85,8 +85,6 @@ int main(int argc, const char * argv[]) {
     if (third_interupt[0].element < 0) {
         printf("find_interupt bug!!!!!\n");
         exit(-1);
-    } else {
-        printf("interupy char is:%c\n", (char)third_interupt[0].length);
     }
     
     /* separate to three arrays */
@@ -95,20 +93,27 @@ int main(int argc, const char * argv[]) {
     // first file
     int j = 0;
     char **temp_file_name = calloc(3, sizeof(char *));
-    printf("Malloc: delimiter_position is%d, type: int\n", char_frequency[0]);
+    // printf("Malloc: delimiter_position is%d, type: int\n", char_frequency[0]);
     int *delimiter_position = malloc(char_frequency[0] * sizeof(int));
     int delimiter_index = 0;
 
     temp_file_write(temp_file_name, delimiter_position, 0, third_interupt, file_size, char_frequency[0], temp_fold_path);
     temp_file_write(temp_file_name, delimiter_position, 1, third_interupt, file_size, char_frequency[0], temp_fold_path);
     temp_file_write(temp_file_name, delimiter_position, 2, third_interupt, file_size, char_frequency[0], temp_fold_path);
-    for (i = 0; i < 3; i++) {
-        if (temp_file_name[i]) {
-            printf("temp file name is %s\n", temp_file_name[i]);
-        }
-    }
     
     temp_file_read(temp_file_name, bwt_result, third_interupt, file_size, delimiter, delimiter_position, char_frequency[0], temp_fold_path);
+
+    free(text);
+    free(delimiter_position);
+
+    for (i = 0; i < 3; i++) {
+        if (temp_file_name[i]) {
+            // printf("temp file name is %s\n", temp_file_name[i]);
+            remove(temp_file_name[i]);
+            free(temp_file_name[i]);
+        }
+    }
+    free(temp_file_name);
 
     return 0;
 
@@ -127,25 +132,25 @@ struct divid_structure* find_interupt(int *char_frequency, int size) {
             break;
         }
     }
-    printf("Divid: first element length: %d\n", return_value[0].length);
+    // printf("Divid: first element length: %d\n", return_value[0].length);
     int max_length = size/3 + 1 - temp;
     temp = (size - return_value[0].length)/2 + 1;
-    printf("Divid: previous temp is %d\n", temp);
+    // printf("Divid: previous temp is %d\n", temp);
     for (i = return_value[0].element + 1; i < 128; i++) {
         temp = temp - char_frequency[i];
         if (temp <= 0) {
-            printf("Divid: temp is %d, i is %c\n", temp, (char)i);
+            // printf("Divid: temp is %d, i is %c\n", temp, (char)i);
             
             return_value[1].element = (char) i;
             return_value[1].length = (size - return_value[0].length)/2 + 1 - temp;
             max_length = max_length < return_value[1].length?return_value[1].length:max_length;
             int third = size - return_value[0].length - return_value[1].length;
             max_length = max_length < third ? third : max_length;
-            printf("Divid: second element length: %d\n", return_value[1].length);
-            printf("Divid: last element length: %d\n", third);
+            // printf("Divid: second element length: %d\n", return_value[1].length);
+            // printf("Divid: last element length: %d\n", third);
             return_value[2].length = size - return_value[0].length - return_value[1].length;
             return_value[2].element = (char) 127;
-            printf("Divid: max number is %d\n", max_length);
+            // printf("Divid: max number is %d\n", max_length);
             return return_value;
         }
     }
@@ -159,21 +164,7 @@ struct divid_structure* find_interupt(int *char_frequency, int size) {
 
 
 void BWT_sort(int *index_array, int size) {
-    
-//    for (i = 0; i < size; i++) {
-//        printf("%d\n", index_array[i]);
-//    }
-
     qsort(index_array, size, sizeof(int), qsort_compare);
-    // for (i = 0; i < size; i++) {
-//        if (index_array[i] == 0)
-//            printf("%c", text[size-1]);
-//        else
-//            printf("%c", text[index_array[i]-1]);
-        // printf("%d ", index_array[i]);
-//        printf("%s\n", text+index_array[i]);
-    // }
-    printf("\n");
 }
 
 int qsort_compare(const void *Ina, const void *Inb) {
