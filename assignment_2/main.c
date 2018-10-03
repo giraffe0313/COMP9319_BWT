@@ -13,14 +13,24 @@
 #define True 1
 #define False 0
 
+struct divid_structure {
+    int length;
+    char element;
+};
 
 int qsort_compare(const void *a, const void *b);
 void BWT_sort(int *index_array, int size);
-int *find_interupt(int *char_frequency, int size);
+struct divid_structure *find_interupt(int *char_frequency, int size);
 int binary_Search(int array[], int l, int r, int x);
+void temp_file_write(char **temp_file_name, int *delimiter_position, int file_number, struct divid_structure* third_interupt
+                    , int file_size, int delimiter_number, const char *temp_fold_path);
 
+void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_structure* third_interupt, 
+                    int file_size, char delimiter, int *delimiter_position, int delimiter_number, 
+                    const char *temp_fold_path);
 char *text;
 int delimiter_number;
+
 
 int main(int argc, const char * argv[]) {
     /* analyze input arguments */
@@ -31,7 +41,7 @@ int main(int argc, const char * argv[]) {
         delimiter = '\n';
     else
         delimiter = (char)argv[1][0];
-//    printf("delimiter is %d %c\n", delimiter, delimiter);
+    printf("delimiter is %d %c\n", delimiter, delimiter);
     const char *temp_fold_path = argv[2];
     const char *text_file = argv[3];
     const char *bwt_result = argv[4];
@@ -49,7 +59,7 @@ int main(int argc, const char * argv[]) {
     file_size = ftell(file) - 1;
     
     fseek(file, 0L, SEEK_SET);
-    printf("file size id %ld\n", file_size);
+    printf("Malloc: file size is %ld, type:char\n", file_size);
     text = malloc(file_size * sizeof(char));
 
     i = 0;
@@ -71,200 +81,77 @@ int main(int argc, const char * argv[]) {
 
 
     /* find half interupt to sperate to two files */
-    int* half_interupt = find_interupt(char_frequency, file_size/2 + 1);
-    if (half_interupt[0] < 0) {
+    struct divid_structure* third_interupt = find_interupt(char_frequency, file_size);
+    if (third_interupt[0].element < 0) {
         printf("find_interupt bug!!!!!\n");
         exit(-1);
     } else {
-        printf("interupy char is:%c\n", (char)half_interupt[0]);
+        printf("interupy char is:%c\n", (char)third_interupt[0].length);
     }
     
+    /* separate to three arrays */
 
 
-
-    /* separate to two arrays */
     // first file
     int j = 0;
-
+    char **temp_file_name = calloc(3, sizeof(char *));
+    printf("Malloc: delimiter_position is%d, type: int\n", char_frequency[0]);
     int *delimiter_position = malloc(char_frequency[0] * sizeof(int));
     int delimiter_index = 0;
 
-    int index_array_length_1 = half_interupt[1];  // the first index array length
-    printf("index array 1 length is %d\n", index_array_length_1);
-    int *index_array = malloc(index_array_length_1 * sizeof(int));
-    for (i = 0; i < file_size; i++) {
-        if (text[i] <= (char)half_interupt[0]) {
-            if (text[i] == 0) {
-                delimiter_position[delimiter_index] = i;
-                delimiter_index++;
-            }
-            index_array[j] = i;
-            j++;
-            if (j == index_array_length_1) {
-                if (delimiter_index != char_frequency[0]) {
-                    printf("delimiter bug!!!!\n");
-                }
-                break;
-            }
+    temp_file_write(temp_file_name, delimiter_position, 0, third_interupt, file_size, char_frequency[0], temp_fold_path);
+    temp_file_write(temp_file_name, delimiter_position, 1, third_interupt, file_size, char_frequency[0], temp_fold_path);
+    temp_file_write(temp_file_name, delimiter_position, 2, third_interupt, file_size, char_frequency[0], temp_fold_path);
+    for (i = 0; i < 3; i++) {
+        if (temp_file_name[i]) {
+            printf("temp file name is %s\n", temp_file_name[i]);
         }
     }
-    printf("first sort result:\n");
-    BWT_sort(index_array, index_array_length_1);
-    char *file_name_1 = malloc(strlen(temp_fold_path) + 10 + 1);
-    strcpy(file_name_1, temp_fold_path);
-    strcat(file_name_1, "/temp1.txt");
     
-    FILE *file_temp1 = fopen(file_name_1, "w");
-    fwrite(index_array, sizeof(int), index_array_length_1, file_temp1);
-    fclose(file_temp1);
-    
-    // second file
-    int index_array_length_2 = file_size - index_array_length_1;
-    printf("index array 2 length is %d\n", index_array_length_2);
-    j = 0;
-    for (i = 0; i < file_size; i++) {
-        if (text[i] > (char)half_interupt[0]) {
-            index_array[j] = i;
-            j++;
-//            printf("%d\n", i);
-            if (j == index_array_length_2) {
-                break;
-            }
-        }
-    }
-    printf("second sort result:\n");
-    BWT_sort(index_array, index_array_length_2);
-    char *file_name_2 = malloc(strlen(temp_fold_path) + 10 + 1);
-    strcpy(file_name_2, temp_fold_path);
-    strcat(file_name_2, "/temp2.txt");
-    FILE *file_temp2 = fopen(file_name_2, "w");
-    fwrite(index_array, sizeof(int), index_array_length_2, file_temp2);
-    fclose(file_temp2);
-
-
-    // write positional file
-    // printf("delimiter position array:\n");
-    // for (i = 0; i < char_frequency[0]; i++) {
-    //     printf("%d ", delimiter_position[i]);
-    // }
-    // printf("\n");
-
-    char *positional_file_name = malloc(strlen(temp_fold_path) + 13 + 1);
-    strcpy(positional_file_name, temp_fold_path);
-    strcat(positional_file_name, "/position.aux");
-    FILE *positional_file = fopen(positional_file_name, "w");
-    int position_index;
-
-    // read from temp file
-
-    FILE *output_file = fopen(bwt_result, "w");
-    file_temp1 = fopen(file_name_1, "r");
-    printf("read temp file1:\n");
-    fread(index_array, sizeof(int), index_array_length_1, file_temp1);
-    
-    for (i = 0; i < index_array_length_1; i++) {
-//        printf("%d", index_array[i]);
-        if (index_array[i] == 0) {              // the first suffix array element.
-            if (text[file_size-1] == 0) {       // if it is delimiter
-                fwrite(&delimiter, sizeof(char), 1, output_file); 
-                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, file_size-1)) == -1) {
-                    printf("binary search error!!\n");
-                    exit(1);
-                } else {
-                    fwrite(&position_index, sizeof(int), 1, positional_file);
-                }
-                // printf(" position %ld: %c", file_size-1, delimiter);
-                
-            } else {                            // ordinary text
-                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                // printf("%c", text[index_array[i]-1]);
-            }
-        } else {
-            if (text[index_array[i]-1] == 0) {
-                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, index_array[i]-1)) == -1) {
-                    printf("binary search error!!\n");
-                    exit(1);
-                } else {
-                    fwrite(&position_index, sizeof(int), 1, positional_file);
-                }
-
-                fwrite(&delimiter, sizeof(char), 1, output_file);
-                // printf(" postion %d: %c", index_array[i]-1, delimiter);
-            } else {
-                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                // printf("%c", text[index_array[i]-1]);
-            }
-        }
-    }
-    printf("\n");
-
-    file_temp2 = fopen(file_name_2, "r");
-    fread(index_array, sizeof(int), index_array_length_2, file_temp2);
-    printf("read temp file2:\n");
-    for (i = 0; i < index_array_length_2; i++) {
-    //    printf("%d", index_array[i]);
-        if (index_array[i] == 0) {
-            if (text[file_size-1] == 0) {
-                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, file_size-1)) == -1) {
-                    printf("binary search error!!\n");
-                    exit(1);
-                } else {
-                    fwrite(&position_index, sizeof(int), 1, positional_file);
-                }
-
-                fwrite(&delimiter, sizeof(char), 1, output_file);
-                // printf(" position %ld: %c", file_size-1, delimiter);
-                
-            } else {
-                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                // printf("%c", text[index_array[i]-1]);
-            }
-        } else {
-            if (text[index_array[i]-1] == 0) {
-                if ((position_index = binary_Search(delimiter_position, 0, char_frequency[0]-1, index_array[i]-1)) == -1) {
-                    printf("binary search error!!\n");
-                    exit(1);
-                } else {
-                    fwrite(&position_index, sizeof(int), 1, positional_file);
-                }
-
-                fwrite(&delimiter, sizeof(char), 1, output_file);
-                // printf(" position %d: %c", index_array[i]-1, delimiter);
-            } else {
-                fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
-                // printf("%c", text[index_array[i]-1]);
-            }
-        }
-    }
-    printf("\n");
+    temp_file_read(temp_file_name, bwt_result, third_interupt, file_size, delimiter, delimiter_position, char_frequency[0], temp_fold_path);
 
     return 0;
 
 }
 
-
-
-
-
-
-
-
-int* find_interupt(int *char_frequency, int size) {
-    int *return_value = malloc(2 * sizeof(int));
+struct divid_structure* find_interupt(int *char_frequency, int size) {
+    struct divid_structure *return_value = calloc(3, sizeof(struct divid_structure));
     int i;
-    int temp = size;
+    int temp = size/3 + 1;
+
     for (i = 0; i < 128; i++) {
         temp = temp - char_frequency[i];
-        // if (char_frequency[i])
-        //     printf("%c frequency is %d, left half is %d\n", i, char_frequency[i], temp);
         if (temp <= 0) {
-            return_value[0] = i;
-            return_value[1] = size - temp;
+            return_value[0].element = (char) i;
+            return_value[0].length = size/3 + 1 - temp;
+            break;
+        }
+    }
+    printf("Divid: first element length: %d\n", return_value[0].length);
+    int max_length = size/3 + 1 - temp;
+    temp = (size - return_value[0].length)/2 + 1;
+    printf("Divid: previous temp is %d\n", temp);
+    for (i = return_value[0].element + 1; i < 128; i++) {
+        temp = temp - char_frequency[i];
+        if (temp <= 0) {
+            printf("Divid: temp is %d, i is %c\n", temp, (char)i);
+            
+            return_value[1].element = (char) i;
+            return_value[1].length = (size - return_value[0].length)/2 + 1 - temp;
+            max_length = max_length < return_value[1].length?return_value[1].length:max_length;
+            int third = size - return_value[0].length - return_value[1].length;
+            max_length = max_length < third ? third : max_length;
+            printf("Divid: second element length: %d\n", return_value[1].length);
+            printf("Divid: last element length: %d\n", third);
+            return_value[2].length = size - return_value[0].length - return_value[1].length;
+            return_value[2].element = (char) 127;
+            printf("Divid: max number is %d\n", max_length);
             return return_value;
         }
     }
-    return_value[0] = -1;
-    return_value[1] = 0;
+    
+    return_value[0].element = -1;
+    return_value[0].length = 0;
     return return_value;
 }
 
@@ -314,4 +201,131 @@ int binary_Search(int array[], int l, int r, int x) {
             r = m - 1; 
     } 
     return -1;
+}
+
+
+void temp_file_write(char **temp_file_name, int *delimiter_position, int file_number, struct divid_structure* third_interupt
+                    , int file_size, int delimiter_number, const char *temp_fold_path) {
+    int j = 0;
+    int i = 0;
+    int index_array_length_1 = third_interupt[file_number].length;
+    printf("Temp_file_write: index_array_length_1 is %d\n", index_array_length_1);
+
+    int *index_array = malloc(index_array_length_1 * sizeof(int));
+    int delimiter_index = 0;
+    if (third_interupt[file_number].length <= 0) {
+        return;
+    }
+
+    printf("seprete char is %c\n", third_interupt[file_number].element);
+    for (i = 0; i < file_size; i++) {
+        if (text[i] <= (char)third_interupt[file_number].element) {
+            if (file_number == 1 && text[i] <= (char)third_interupt[0].element) {
+                continue;
+            }
+            if (file_number == 2 && text[i] <= (char)third_interupt[1].element) {
+                continue;
+            }
+            if (text[i] == 0) {
+                delimiter_position[delimiter_index] = i;
+                delimiter_index++;
+                printf("file number: %d\n", file_number);
+            }
+            index_array[j] = i;
+            j++;
+            printf("%c\n", text[i]);
+            if (j == index_array_length_1) {
+                if (delimiter_index != delimiter_number) {
+                    printf("delimiter bug!!!!\n");
+                }
+                break;
+            }
+        }
+    }
+    printf("Start %d BWT_sort:\n", file_number);
+    printf("index_array_length_1 : %d\n", index_array_length_1);
+    printf("index array:");
+    for (i = 0; i < index_array_length_1; i++) {
+        printf("%d ", index_array[i]);
+    }
+    printf("\n");
+
+    BWT_sort(index_array, index_array_length_1);
+    char *file_name_1 = malloc(strlen(temp_fold_path) + 10 + 1);
+    sprintf(file_name_1, "%stemp%d.txt", temp_fold_path, file_number);
+    
+    FILE *file_temp1 = fopen(file_name_1, "w");
+    fwrite(index_array, sizeof(int), index_array_length_1, file_temp1);
+    fclose(file_temp1);
+    free(index_array);
+    temp_file_name[file_number] = file_name_1;
+}
+
+
+
+
+void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_structure* third_interupt, 
+                    int file_size, char delimiter, int *delimiter_position, int delimiter_number, 
+                    const char *temp_fold_path) {    
+    FILE *output_file = fopen(bwt_result, "w");
+    int i = 0;
+    int file_number = 0;
+    int position_index;
+    int index_array_length = third_interupt[2].length;
+    for (i = 0; i < 3; i ++) {
+        if (third_interupt[i].length > index_array_length) {
+            index_array_length = third_interupt[i].length;
+        }
+    }
+
+    int *index_array = malloc(index_array_length * sizeof(int));
+    
+    char *positional_file_name = malloc(strlen(temp_fold_path) + 13 + 1);
+    strcpy(positional_file_name, temp_fold_path);
+    strcat(positional_file_name, "/position.aux");
+    FILE *positional_file = fopen(positional_file_name, "w");
+    
+    
+    for (; file_number < 3; file_number++) {
+        if (!temp_file_name[file_number]) return;
+        FILE *file_temp = fopen(temp_file_name[file_number], "r");
+        
+        fread(index_array, sizeof(int), third_interupt[file_number].length, file_temp);
+        
+        for (i = 0; i < third_interupt[file_number].length; i++) {
+    //        printf("%d", index_array[i]);
+            if (index_array[i] == 0) {              // the first suffix array element.
+                if (text[file_size-1] == 0) {       // if it is delimiter
+                    fwrite(&delimiter, sizeof(char), 1, output_file); 
+                    if ((position_index = binary_Search(delimiter_position, 0, delimiter_number-1, file_size-1)) == -1) {
+                        printf("binary search error!!\n");
+                        exit(1);
+                    } else {
+                        fwrite(&position_index, sizeof(int), 1, positional_file);
+                    }
+                    // printf(" position %ld: %c", file_size-1, delimiter);
+                    
+                } else {                            // ordinary text
+                    fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                    // printf("%c", text[index_array[i]-1]);
+                }
+            } else {
+                if (text[index_array[i]-1] == 0) {
+                    if ((position_index = binary_Search(delimiter_position, 0, delimiter_number-1, index_array[i]-1)) == -1) {
+                        printf("binary search error!!\n");
+                        exit(1);
+                    } else {
+                        fwrite(&position_index, sizeof(int), 1, positional_file);
+                    }
+
+                    fwrite(&delimiter, sizeof(char), 1, output_file);
+                    // printf(" postion %d: %c", index_array[i]-1, delimiter);
+                } else {
+                    fwrite(&text[index_array[i]-1], sizeof(char), 1, output_file);
+                    // printf("%c", text[index_array[i]-1]);
+                }
+            }
+        }
+    }
+    free(index_array);
 }
