@@ -209,7 +209,7 @@ void temp_file_write(char **temp_file_name, int *delimiter_position, int file_nu
     int j = 0;
     int i = 0;
     int index_array_length_1 = third_interupt[file_number].length;
-    printf("Temp_file_write: index_array_length_1 is %d\n", index_array_length_1);
+    // printf("Temp_file_write: index_array_length_1 is %d\n", index_array_length_1);
 
     int *index_array = malloc(index_array_length_1 * sizeof(int));
     int delimiter_index = 0;
@@ -217,7 +217,7 @@ void temp_file_write(char **temp_file_name, int *delimiter_position, int file_nu
         return;
     }
 
-    printf("seprete char is %c\n", third_interupt[file_number].element);
+    // printf("seprete char is %c\n", third_interupt[file_number].element);
     for (i = 0; i < file_size; i++) {
         if (text[i] <= (char)third_interupt[file_number].element) {
             if (file_number == 1 && text[i] <= (char)third_interupt[0].element) {
@@ -229,26 +229,26 @@ void temp_file_write(char **temp_file_name, int *delimiter_position, int file_nu
             if (text[i] == 0) {
                 delimiter_position[delimiter_index] = i;
                 delimiter_index++;
-                printf("file number: %d\n", file_number);
+                // printf("file number: %d\n", file_number);
             }
             index_array[j] = i;
             j++;
             printf("%c\n", text[i]);
             if (j == index_array_length_1) {
-                if (delimiter_index != delimiter_number) {
-                    printf("delimiter bug!!!!\n");
-                }
+                // if (delimiter_index != delimiter_number) {
+                //     printf("delimiter bug!!!!\n");
+                // }
                 break;
             }
         }
     }
-    printf("Start %d BWT_sort:\n", file_number);
-    printf("index_array_length_1 : %d\n", index_array_length_1);
-    printf("index array:");
-    for (i = 0; i < index_array_length_1; i++) {
-        printf("%d ", index_array[i]);
-    }
-    printf("\n");
+    // printf("Start %d BWT_sort:\n", file_number);
+    // printf("index_array_length_1 : %d\n", index_array_length_1);
+    // printf("index array:");
+    // for (i = 0; i < index_array_length_1; i++) {
+    //     printf("%d ", index_array[i]);
+    // }
+    // printf("\n");
 
     BWT_sort(index_array, index_array_length_1);
     char *file_name_1 = malloc(strlen(temp_fold_path) + 10 + 1);
