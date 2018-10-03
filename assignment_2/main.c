@@ -233,7 +233,7 @@ void temp_file_write(char **temp_file_name, int *delimiter_position, int file_nu
             }
             index_array[j] = i;
             j++;
-            printf("%c\n", text[i]);
+            // printf("%c\n", text[i]);
             if (j == index_array_length_1) {
                 // if (delimiter_index != delimiter_number) {
                 //     printf("delimiter bug!!!!\n");
