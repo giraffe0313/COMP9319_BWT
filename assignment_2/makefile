@@ -5,4 +5,4 @@ bwtencode: main.c
 	gcc main.c -o bwtencode
 
 bwtsearch: decode.c
-	gcc decode.c -o bwtsearch
+	gcc decode.c -lm -o bwtsearch
