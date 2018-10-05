@@ -44,7 +44,8 @@ int main(int argc, const char * argv[]) {
         strncpy(bwt_file_path, bwt_result, file_position);
         printf("bwt path is %s\n", bwt_file_path);
     } else {
-        bwt_file_name = bwt_result;
+        bwt_file_name = malloc(strlen(bwt_result) + 1);
+        sprintf(bwt_file_name, "%s", bwt_result);
 
         bwt_file_path = malloc(2 * sizeof(char));
         bwt_file_path[0] = '.';

@@ -296,13 +296,16 @@ void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_
         strncpy(bwt_file_path, bwt_result, file_position);
         printf("bwt path is %s\n", bwt_file_path);
     } else {
-        bwt_file_name = bwt_result;
+        bwt_file_name = malloc(strlen(bwt_result) + 1);
+
+        sprintf(bwt_file_name, "%s", bwt_result);
 
         bwt_file_path = malloc(2 * sizeof(char));
         bwt_file_path[0] = '.';
         bwt_file_path[1] = '/';
     }
 
+    printf("bwt_file_path is %s, bwt_file_name is %s", bwt_file_path, bwt_file_name);
 
     
     // char 
