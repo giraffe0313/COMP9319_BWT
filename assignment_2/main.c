@@ -28,6 +28,9 @@ void temp_file_write(char **temp_file_name, int *delimiter_position, int file_nu
 void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_structure* third_interupt, 
                     int file_size, char delimiter, int *delimiter_position, int delimiter_number, 
                     const char *temp_fold_path);
+
+int extract_bwt_file_name(const char *bwt_file_path);
+
 char *text;
 int delimiter_number;
 
@@ -56,7 +59,7 @@ int main(int argc, const char * argv[]) {
 
 
     /* need to change !!!!!!*/
-    file_size = ftell(file);
+    file_size = ftell(file) - 1;
     
     fseek(file, 0L, SEEK_SET);
     // printf("Malloc: file size is %ld, type:char\n", file_size);
@@ -123,6 +126,11 @@ struct divid_structure* find_interupt(int *char_frequency, int size) {
     struct divid_structure *return_value = calloc(3, sizeof(struct divid_structure));
     int i;
     int temp = size/3 + 1;
+    for (i = 0; i < 128; i++) {
+        if (char_frequency[i]) {
+            printf("char %c is %d\n", i, char_frequency[i]);
+        }
+    }
 
     for (i = 0; i < 128; i++) {
         temp = temp - char_frequency[i];
@@ -132,7 +140,7 @@ struct divid_structure* find_interupt(int *char_frequency, int size) {
             break;
         }
     }
-    // printf("Divid: first element length: %d\n", return_value[0].length);
+    printf("Divid: first element length: %d, character is %c\n", return_value[0].length, return_value[0].element);
     int max_length = size/3 + 1 - temp;
     temp = (size - return_value[0].length)/2 + 1;
     // printf("Divid: previous temp is %d\n", temp);
@@ -146,7 +154,7 @@ struct divid_structure* find_interupt(int *char_frequency, int size) {
             max_length = max_length < return_value[1].length?return_value[1].length:max_length;
             int third = size - return_value[0].length - return_value[1].length;
             max_length = max_length < third ? third : max_length;
-            // printf("Divid: second element length: %d\n", return_value[1].length);
+            printf("Divid: second element length: %d, character is %c\n", return_value[1].length, return_value[1].element);
             // printf("Divid: last element length: %d\n", third);
             return_value[2].length = size - return_value[0].length - return_value[1].length;
             return_value[2].element = (char) 127;
@@ -271,9 +279,25 @@ void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_
 
     int *index_array = malloc(index_array_length * sizeof(int));
     
-    char *positional_file_name = malloc(strlen(temp_fold_path) + 13 + 1);
-    strcpy(positional_file_name, temp_fold_path);
-    strcat(positional_file_name, "/position.aux");
+    // postional file:
+    int file_position = extract_bwt_file_name(bwt_result);
+    printf("file_position is %d\n", file_position);
+
+    char *bwt_file_name = malloc(strlen((bwt_result) - file_position + 1) * sizeof(char));
+    strcpy(bwt_file_name, bwt_result + file_position);
+    printf("bwt_file_name is %s\n", bwt_file_name);
+
+    char *bwt_file_path = malloc(file_position * sizeof(char) + 1);
+    strncpy(bwt_file_path, bwt_result, file_position);
+    printf("bwt path is %s\n", bwt_file_path);
+
+    
+    // char 
+    
+    char *positional_file_name = malloc(file_position + 16 + strlen((bwt_result) - file_position + 1) + 1);
+    // strcpy(positional_file_name, temp_fold_path);
+    // strcat(positional_file_name, "/position.aux");
+    sprintf(positional_file_name, "%sencode_temp_%s.aux", bwt_file_path, bwt_file_name);
     FILE *positional_file = fopen(positional_file_name, "w");
     
     
@@ -319,4 +343,14 @@ void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_
         }
     }
     free(index_array);
+}
+
+int extract_bwt_file_name(const char *bwt_file_path) {
+    int i = strlen(bwt_file_path) - 1;
+    while (i >= 0) {
+        if (bwt_file_path[i] == '/')
+            return i + 1;
+        i--;
+    }
+    return i;
 }

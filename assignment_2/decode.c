@@ -30,12 +30,6 @@ int main(int argc, const char * argv[]) {
     const char *argument = argv[4];
     const char *search_content = argv[5];
 
-    // open delimiter position file
-    char *delimiter_position_file_path = malloc(strlen(temp_file_path) + 12 + 1);
-    sprintf(delimiter_position_file_path, "%sposition.aux", temp_file_path);
-    FILE *delimiter_position_file = fopen(delimiter_position_file_path, "r");
-
-
     // store search information file
     int file_position = extract_bwt_file_name(bwt_file_path);
     char *bwt_file_name = malloc(strlen((bwt_file_path) - file_position + 1) * sizeof(char));
@@ -46,6 +40,17 @@ int main(int argc, const char * argv[]) {
     char *occ_file_path = malloc(strlen(temp_file_path) + 15 + 1);
     sprintf(occ_file_path, "%ssearch_file_%s.tmp", temp_file_path, bwt_file_name);
     FILE *occ_file;
+
+    // open delimiter position file
+    char *bwt_path = malloc(file_position * sizeof(char) + 1);
+    strncpy(bwt_path, bwt_file_path, file_position);
+    printf("bwt path is %s\n", bwt_file_path);
+
+    
+    char *delimiter_position_file_path = malloc(file_position + 16 + strlen((bwt_file_path) - file_position + 1) + 1);
+    sprintf(delimiter_position_file_path, "%sencode_temp_%s.aux", bwt_path, bwt_file_name);
+    FILE *delimiter_position_file = fopen(delimiter_position_file_path, "r");
+    printf("delimiter_position_file_path is %s\n", delimiter_position_file_path);
 
     // open bwt file
     FILE *bwt_file = fopen(bwt_file_path, "r");
