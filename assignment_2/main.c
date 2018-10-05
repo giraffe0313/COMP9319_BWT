@@ -283,13 +283,26 @@ void temp_file_read(char **temp_file_name, const char *bwt_result, struct divid_
     int file_position = extract_bwt_file_name(bwt_result);
     printf("file_position is %d\n", file_position);
 
-    char *bwt_file_name = malloc(strlen((bwt_result) - file_position + 1) * sizeof(char));
-    strcpy(bwt_file_name, bwt_result + file_position);
-    printf("bwt_file_name is %s\n", bwt_file_name);
 
-    char *bwt_file_path = malloc(file_position * sizeof(char) + 1);
-    strncpy(bwt_file_path, bwt_result, file_position);
-    printf("bwt path is %s\n", bwt_file_path);
+
+    char *bwt_file_path;
+    char *bwt_file_name;
+    if (file_position > 0) {
+        bwt_file_name = malloc(strlen((bwt_result) - file_position + 1) * sizeof(char));
+        strcpy(bwt_file_name, bwt_result + file_position);
+        printf("bwt_file_name is %s\n", bwt_file_name);
+
+        bwt_file_path = malloc(file_position * sizeof(char) + 1);
+        strncpy(bwt_file_path, bwt_result, file_position);
+        printf("bwt path is %s\n", bwt_file_path);
+    } else {
+        bwt_file_name = bwt_result;
+
+        bwt_file_path = malloc(2 * sizeof(char));
+        bwt_file_path[0] = '.';
+        bwt_file_path[1] = '/';
+    }
+
 
     
     // char 
