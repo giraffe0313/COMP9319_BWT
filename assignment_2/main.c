@@ -45,9 +45,12 @@ int main(int argc, const char * argv[]) {
     else
         delimiter = (char)argv[1][0];
     // printf("delimiter is %d %c\n", delimiter, delimiter);
-    const char *temp_fold_path = argv[2];
+    const char *temp_fold_path_temp = argv[2];
     const char *text_file = argv[3];
     const char *bwt_result = argv[4];
+
+    char *temp_fold_path = malloc(strlen(temp_fold_path_temp) + 1);
+    sprintf(temp_fold_path, "%s/", temp_fold_path_temp);
     
     
     /* open file */
@@ -111,7 +114,6 @@ int main(int argc, const char * argv[]) {
 
     for (i = 0; i < 3; i++) {
         if (temp_file_name[i]) {
-            // printf("temp file name is %s\n", temp_file_name[i]);
             remove(temp_file_name[i]);
             free(temp_file_name[i]);
         }
