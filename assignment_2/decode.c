@@ -4,13 +4,15 @@
 #include <unistd.h>
 #include <math.h>
 
-#define OCC_SIZE 5
+#define OCC_SIZE 1000
 
 int extract_bwt_file_name(const char *bwt_file_path);
 int Occ(char c, int num, FILE* occ_file, FILE* bwt_file);
 int backward_search(int *First, int *Last, char delimiter, const char *P, int *char_frequency, FILE* occ_file, FILE* bwt_file);
 int get_next_char_frequency(int *char_frequency, char c);
 int search_to_delimiter(int *char_frequency, char delimiter, int *num, FILE* occ_file, FILE* bwt_file, FILE *delimiter_position_file);
+
+int record_printing(int *char_frequency, int num, char *result, FILE* occ_file, FILE* bwt_file);
 
 int cmpfunc (const void * a, const void * b);
 
@@ -171,7 +173,15 @@ int main(int argc, const char * argv[]) {
         }
         printf("start is %d, end is %d\n", range[0], range[1]);
         
-
+        int j;
+        char *result = malloc(6000 * sizeof(char));
+        for (i = range[0]; i <= range[1]; i++) {
+            int length = record_printing(char_frequency, i, result, occ_file, bwt_file);
+            for (j = length - 2; j >= 0; j--) {
+                printf("%c", result[j]);
+            }
+            printf("\n");
+        }
     }
 
 
@@ -212,6 +222,32 @@ int backward_search(int *First, int *Last, char delimiter, const char *P, int *c
     printf("(Last - First + 1) = %d\n", *Last - *First + 1);
     printf("\n");
     return c;
+}
+
+int record_printing(int *char_frequency, int num, char *result, FILE* occ_file, FILE* bwt_file) {
+    int delimiter_number = get_next_char_frequency(char_frequency, 0);
+    
+    fseek(bwt_file, num - 1, SEEK_SET);
+    char temp_c;
+    fread(&temp_c, sizeof(char), 1, bwt_file);
+    result[0] = temp_c;
+    int length = 1;
+    // printf("Record: temp c is %c\n", temp_c);
+    num = char_frequency[temp_c] + Occ(temp_c, num - 1, occ_file, bwt_file) + 1;
+    while (num > delimiter_number) {
+        fseek(bwt_file, num - 1, SEEK_SET);
+        fread(&temp_c, sizeof(char), 1, bwt_file);
+        result[length] = temp_c;
+        length++;
+        // printf("Record: temp c is %c\n", temp_c);
+        if (temp_c == delimiter) {
+            temp_c = 0;
+        }
+        num = char_frequency[temp_c] + Occ(temp_c, num - 1, occ_file, bwt_file) + 1;
+    }
+    return length;
+
+    
 }
 
 int search_to_delimiter(int *char_frequency, char delimiter, int *num, FILE* occ_file, FILE* bwt_file, FILE *delimiter_position_file) {
