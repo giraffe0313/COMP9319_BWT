@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -38,14 +37,12 @@ int main(int argc, const char * argv[]) {
     char *occ_file_path = malloc(strlen(temp_file_path) + 16);
     sprintf(occ_file_path, "%ssearch_file.tmp", temp_file_path);
     FILE *occ_file;
-    // printf("occ_file_path is %s\n", occ_file_path);
 
 
     // open delimiter position file
     char *delimiter_position_file_path = malloc(strlen(bwt_result) + 12 + 1);
     sprintf(delimiter_position_file_path, "%sposiotion.aux", bwt_result);
     FILE *delimiter_position_file = fopen(delimiter_position_file_path, "r");
-    // printf("delimiter_position_file_path is %s\n", delimiter_position_file_path);
 
     // open bwt file
     FILE *bwt_file = fopen(bwt_result, "r");
@@ -85,29 +82,18 @@ int main(int argc, const char * argv[]) {
 
     int temp_sum = char_frequency[0];
     int temp, last_character;
-
-    // for (i = 0; i < 128; i++) {
-    //     if (char_frequency[i]) {
-    //         printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
-    //     }
-    // }
-
     char_frequency[0] = 0;
-
-
-    printf("\n");
 
     for (i = 0; i < 128; i++) {
         if (char_frequency[i]) {
             temp = char_frequency[i];
             char_frequency[i] = temp_sum;
             temp_sum = temp_sum + temp;
-            printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
+            // printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
             last_character = i;
         }
     }
     char_frequency[last_character + 1] = temp_sum;
-    // printf("frequency of char %c is %d\n", last_character + 1, temp_sum);
 
     if ((strcmp(argument, "-m") == 0) || (strcmp(argument, "-a") == 0) || (strcmp(argument, "-n") == 0)) {
         int First = 0;
@@ -141,11 +127,6 @@ int main(int argc, const char * argv[]) {
             temp_index++;
         }
         qsort(result_array, Last - First + 1, sizeof(int), cmpfunc);
-        // printf("back ward result is:\n");
-        // for (i = 0; i < Last - First + 1; i++) {
-        //     printf("%d ", result_array[i]);
-        // }
-        // printf("\n");
 
         if ((strcmp(argument, "-a") == 0)) {
             // printf("-a result:\n");
@@ -158,7 +139,6 @@ int main(int argc, const char * argv[]) {
             }
             return 0;
         } else {
-            // printf("-n result:\n");
             int last = -1;
             int result = 0;
             for (i = 0; i < Last - First + 1; i++) {
@@ -187,7 +167,7 @@ int main(int argc, const char * argv[]) {
                 current_num = 0;
             }
         }
-        printf("start is %d, end is %d\n", range[0], range[1]);
+        // printf("start is %d, end is %d\n", range[0], range[1]);
         
         int j;
         char *result = malloc(6000 * sizeof(char));
@@ -195,12 +175,12 @@ int main(int argc, const char * argv[]) {
         for (i = range[0]; i <= range[1]; i++) {
            
             int length = record_printing(char_frequency, i, result, occ_file, bwt_file);
-            printf("the number of %d record: \n", i);
+            // printf("the number of %d record: \n", i);
             for (j = length - 2; j >= 0; j--) {
                 printf("%c", result[j]);
             }
             printf("\n");
-            printf("\n");
+            // printf("\n");
         }
         
     }
@@ -222,12 +202,6 @@ int backward_search(int *First, int *Last, char delimiter, const char *P, int *c
     *Last = get_next_char_frequency(char_frequency, c);
 
     while ((*First <= *Last) && (i >= 2)) {
-        // printf("i = %d\n", i);
-        // printf("c = %c\n", c);
-        // printf("First = %d\n", *First);
-        // printf("Last = %d\n", *Last);
-        // printf("(Last - First + 1) = %d\n", *Last - *First + 1);
-        // printf("\n");
         c = P[i - 2];
         if (c == delimiter)
             c = 0;
@@ -236,12 +210,6 @@ int backward_search(int *First, int *Last, char delimiter, const char *P, int *c
         *Last = char_frequency[c] + Occ(c, *Last, occ_file, bwt_file);
         i--;
     }
-    // printf("i = %d\n", i);
-    // printf("c = %c\n", c);
-    // printf("First = %d\n", *First);
-    // printf("Last = %d\n", *Last);
-    // printf("(Last - First + 1) = %d\n", *Last - *First + 1);
-    // printf("\n");
     return c;
 }
 
@@ -321,7 +289,6 @@ int Occ(char c, int num, FILE* occ_file, FILE* bwt_file) {
     }
     fseek(bwt_file, (num/OCC_SIZE) * OCC_SIZE, SEEK_SET);
     i = 0;
-    // printf("Occ: init frequency is %d\n", frequency);
     for (; i < num - (num/OCC_SIZE) * OCC_SIZE; i++) {
         if ((fgetc_result = fgetc(bwt_file)) != EOF) {
             if (fgetc_result == delimiter) {
