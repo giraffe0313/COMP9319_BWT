@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#define OCC_SIZE 5
+#define OCC_SIZE 1000
 
 int extract_bwt_file_name(const char *bwt_file_path);
 int Occ(char c, int num, FILE* occ_file, FILE* bwt_file);
@@ -85,13 +85,24 @@ int main(int argc, const char * argv[]) {
 
     int temp_sum = char_frequency[0];
     int temp, last_character;
+
+    // for (i = 0; i < 128; i++) {
+    //     if (char_frequency[i]) {
+    //         printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
+    //     }
+    // }
+
     char_frequency[0] = 0;
+
+
+    printf("\n");
+
     for (i = 0; i < 128; i++) {
         if (char_frequency[i]) {
             temp = char_frequency[i];
             char_frequency[i] = temp_sum;
             temp_sum = temp_sum + temp;
-            // printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
+            printf("frequency of char %c is %d\n", (char)i, char_frequency[i]);
             last_character = i;
         }
     }
@@ -176,17 +187,22 @@ int main(int argc, const char * argv[]) {
                 current_num = 0;
             }
         }
-        // printf("start is %d, end is %d\n", range[0], range[1]);
+        printf("start is %d, end is %d\n", range[0], range[1]);
         
         int j;
         char *result = malloc(6000 * sizeof(char));
+        
         for (i = range[0]; i <= range[1]; i++) {
+           
             int length = record_printing(char_frequency, i, result, occ_file, bwt_file);
+            printf("the number of %d record: \n", i);
             for (j = length - 2; j >= 0; j--) {
                 printf("%c", result[j]);
             }
             printf("\n");
+            printf("\n");
         }
+        
     }
 
 
@@ -231,15 +247,19 @@ int backward_search(int *First, int *Last, char delimiter, const char *P, int *c
 
 int record_printing(int *char_frequency, int num, char *result, FILE* occ_file, FILE* bwt_file) {
     int delimiter_number = get_next_char_frequency(char_frequency, 0);
-    
+    // printf("Record_printing: num is %d\n", num);
+   
     fseek(bwt_file, num - 1, SEEK_SET);
+    // printf("test\n");
     char temp_c;
+    
     fread(&temp_c, sizeof(char), 1, bwt_file);
     result[0] = temp_c;
     int length = 1;
     
-    num = char_frequency[temp_c] + Occ(temp_c, num - 1, occ_file, bwt_file) + 1;
     // printf("Record: temp c is %c\n", temp_c);
+    num = char_frequency[temp_c] + Occ(temp_c, num - 1, occ_file, bwt_file) + 1;
+    
     // printf("Record: num is %d\n", num);
     while (num > delimiter_number) {
         fseek(bwt_file, num - 1, SEEK_SET);
