@@ -6,3 +6,6 @@ bwtencode: main.c
 
 bwtsearch: decode.c
 	gcc decode.c -lm -o bwtsearch
+
+clean:
+	rm bwtencode bwtsearch
